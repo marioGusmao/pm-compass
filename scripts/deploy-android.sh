@@ -24,12 +24,12 @@
 #
 #   curl -s http://localhost:9222/json/list      # find the page target
 #   # then drive Runtime.evaluate over its webSocketDebuggerUrl. Obsidian's `app` global is
-#   # in scope there, e.g. app.setting.openTabById("pm-compass").
+#   # in scope there, e.g. app.setting.openTabById("worktrack-pm-compass").
 #
 set -euo pipefail
 
 readonly APP_ID="md.obsidian"
-readonly PLUGIN_ID="pm-compass"
+readonly PLUGIN_ID="worktrack-pm-compass"
 readonly DEVTOOLS_PORT=9222
 readonly VAULT_SEARCH_DEPTH=6
 
@@ -92,7 +92,7 @@ done
 # A positional vault wins over $OBSIDIAN_VAULT, the same way --vault does.
 [ -n "$VAULT_ARG" ] && VAULT="$VAULT_ARG"
 
-# Lists the vaults on the device that already have pm-compass installed.
+# Lists the vaults on the device that already have worktrack-pm-compass installed.
 #
 # Matching on the plugin folder rather than on `.obsidian/` alone is what makes the output
 # actionable: deploying needs an existing plugin directory (see the $DEST check below), so a

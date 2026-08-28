@@ -2,7 +2,7 @@
 import { vi, describe, it, expect, beforeEach, type Mock } from "vitest";
 
 vi.mock("./ui/task-graph-view", () => ({
-  TASK_GRAPH_VIEW_TYPE: "pm-compass-task-graph",
+  TASK_GRAPH_VIEW_TYPE: "worktrack-pm-compass-task-graph",
   TaskGraphView: class {},
 }));
 
@@ -247,14 +247,14 @@ describe("loadSettings", () => {
     const plugin = makePlugin();
     internals(plugin)._data = { panelConfig: { showActiveOnly: false, showArchived: true } };
     await plugin.loadSettings();
-    expect(plugin.settings.panelConfig).toEqual({ showActiveOnly: false });
+    expect(plugin.settings.panelConfig).toEqual({ showActiveOnly: false, showAllDependencies: false });
   });
 
   it("falls back to the default for a panel toggle a saved panelConfig predates", async () => {
     const plugin = makePlugin();
     internals(plugin)._data = { panelConfig: {} };
     await plugin.loadSettings();
-    expect(plugin.settings.panelConfig).toEqual({ showActiveOnly: true });
+    expect(plugin.settings.panelConfig).toEqual({ showActiveOnly: true, showAllDependencies: false });
   });
 
   it("carries `splitDailyTasks` over to the name it goes by now", async () => {
@@ -433,8 +433,8 @@ describe("onload", () => {
 
     await plugin.onload();
 
-    expect(registerViewSpy).toHaveBeenCalledWith("pm-compass-task-graph", expect.any(Function));
-    expect(registerViewSpy).toHaveBeenCalledWith("pm-compass-dashboard", expect.any(Function));
+    expect(registerViewSpy).toHaveBeenCalledWith("worktrack-pm-compass-task-graph", expect.any(Function));
+    expect(registerViewSpy).toHaveBeenCalledWith("worktrack-pm-compass-dashboard", expect.any(Function));
   });
 
   it("adds the open-dashboard and open-task-graph commands", async () => {
@@ -576,7 +576,7 @@ describe("activateView", () => {
     await internals(plugin).activateView();
 
     expect(workspace.getLeaf).toHaveBeenCalledWith("tab");
-    expect(newLeaf.setViewState).toHaveBeenCalledWith({ type: "pm-compass-task-graph", active: true });
+    expect(newLeaf.setViewState).toHaveBeenCalledWith({ type: "worktrack-pm-compass-task-graph", active: true });
     expect(workspace.revealLeaf).toHaveBeenCalledWith(newLeaf);
   });
 });
@@ -607,7 +607,7 @@ describe("activateDashboard", () => {
     await internals(plugin).activateDashboard();
 
     expect(workspace.getLeaf).toHaveBeenCalledWith("tab");
-    expect(newLeaf.setViewState).toHaveBeenCalledWith({ type: "pm-compass-dashboard", active: true });
+    expect(newLeaf.setViewState).toHaveBeenCalledWith({ type: "worktrack-pm-compass-dashboard", active: true });
     expect(workspace.revealLeaf).toHaveBeenCalledWith(newLeaf);
   });
 });

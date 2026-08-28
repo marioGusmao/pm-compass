@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Build the plugin and copy main.js/manifest.json/styles.css into a vault's
-# .obsidian/plugins/pm-compass directory (overwriting any previous copy).
+# .obsidian/plugins/worktrack-pm-compass directory (overwriting any previous copy).
 #
 # Usage:   scripts/update-plugin.sh [--dev] <vault-path>
 # Example: scripts/update-plugin.sh ~/Documents/MyVault
@@ -34,7 +34,7 @@ fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$SCRIPT_DIR/.."
-DEST="$VAULT/.obsidian/plugins/pm-compass"
+DEST="$VAULT/.obsidian/plugins/worktrack-pm-compass"
 
 if [[ "$DEV" == true ]]; then
   echo "Building (dev: readable, with sourcemap)…"
@@ -49,4 +49,4 @@ cp "$ROOT/main.js" "$DEST/main.js"
 cp "$ROOT/manifest.json" "$DEST/manifest.json"
 [[ -f "$ROOT/styles.css" ]] && cp "$ROOT/styles.css" "$DEST/styles.css"
 
-echo "Updated pm-compass in $DEST"
+echo "Updated worktrack-pm-compass in $DEST"

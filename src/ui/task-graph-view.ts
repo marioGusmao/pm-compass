@@ -35,8 +35,9 @@ import { Icon, renderIcon } from "./icons";
 import { openTaskContextMenu } from "./task-context-menu";
 import { DASHBOARD_VIEW_TYPE } from "./dashboard-view";
 import { OffscreenRefreshGate } from "./offscreen-refresh-gate";
+import { buildProjectDependencyAudit, type DependencyAuditRef } from "../model/project/dependency-audit";
 
-export const TASK_GRAPH_VIEW_TYPE = "pm-compass-task-graph";
+export const TASK_GRAPH_VIEW_TYPE = "worktrack-pm-compass-task-graph";
 
 /** Spacing per graph: the drilled-in view has room the stacked project sections don't, and
  *  the project grid is a list rather than a drawing, so it sits tighter than either. */
@@ -110,7 +111,7 @@ export interface GraphElements {
 interface PluginWithPanelConfig {
   settings: {
     projectsFolder: string;
-    panelConfig: { showActiveOnly: boolean };
+    panelConfig: { showActiveOnly: boolean; showAllDependencies: boolean };
     confirmDeletes: boolean;
     confirmTaskMoves: boolean;
     confirmDependencyRemoval: boolean;
@@ -206,9 +207,13 @@ export class TaskGraphView extends ItemView {
    *  what the remove menu works from. */
   private readonly liftedEdges = new Map<string, LiftedDependency>();
   private showActiveOnly = true;
+  /** The selected project's whole task tree, rather than only the current drill level. */
+  private showAllDependencies = false;
   private readonly plugin: PluginWithPanelConfig;
   private breadcrumbEl!: HTMLElement;
   private graphContainer!: HTMLElement;
+  private dependencyAuditEl!: HTMLElement;
+  private dependencyModeEl!: HTMLElement;
   private readonly CHANGE_DEBOUNCE_MS = 300;
   private settingsPanelEl: HTMLElement | null = null;
   private settingsPanelOpen = false;
@@ -251,13 +256,16 @@ export class TaskGraphView extends ItemView {
   async onOpen(): Promise<void> {
     this.refreshGate.register();
     this.showActiveOnly = this.plugin.settings.panelConfig.showActiveOnly;
+    this.showAllDependencies = this.plugin.settings.panelConfig.showAllDependencies;
     const breadcrumbBar = this.contentEl.createDiv({ cls: "pm-breadcrumb" });
     this.breadcrumbEl = breadcrumbBar.createSpan({ cls: "pm-breadcrumb-items" });
+    this.buildDependencyMode(breadcrumbBar);
     this.buildGear(breadcrumbBar);
     const scrollWrapper = this.contentEl.createDiv({ cls: "pm-compass-scroll-wrapper" });
     this.graphContainer = scrollWrapper.createDiv({
       cls: "pm-compass-graph-container",
     });
+    this.dependencyAuditEl = scrollWrapper.createDiv({ cls: "pm-dependency-audit-host" });
 
     // Pointerdown on a card's own controls: each opens its picker, and none of them
     // should also start dragging the card.
@@ -528,6 +536,44 @@ export class TaskGraphView extends ItemView {
       );
     }
     menu.showAtMouseEvent(evt);
+  }
+
+  /** The level/all-dependencies switch. All mode belongs to a selected project, never to
+   * the vault-wide grid, and returns a deep drill to that project's root before drawing. */
+  private buildDependencyMode(bar: HTMLElement): void {
+    this.dependencyModeEl = bar.createDiv({ cls: "pm-dependency-mode" });
+    const addButton = (mode: "level" | "all", label: string) => {
+      const button = this.dependencyModeEl.createEl("button", {
+        cls: "pm-dependency-mode-btn",
+        text: label,
+        attr: { "data-mode": mode },
+      });
+      button.addEventListener("click", () => {
+        const all = mode === "all";
+        if (all) {
+          const project = this.drillPath[0];
+          if (!project || isTask(project)) return;
+          this.drillPath = [project];
+        }
+        this.showAllDependencies = all;
+        this.plugin.settings.panelConfig.showAllDependencies = all;
+        void this.plugin.saveSettings();
+        this.renderGraph();
+      });
+    };
+    addButton("level", "Current level");
+    addButton("all", "All dependencies");
+  }
+
+  private updateDependencyMode(): void {
+    const project = this.drillPath[0];
+    const canShowAll = Boolean(project && !isTask(project));
+    for (const button of this.dependencyModeEl.querySelectorAll<HTMLButtonElement>(".pm-dependency-mode-btn")) {
+      const all = button.dataset.mode === "all";
+      button.disabled = all && !canShowAll;
+      button.setAttribute("aria-pressed", String(all === this.showAllDependencies));
+      button.classList.toggle("is-active", all === this.showAllDependencies);
+    }
   }
 
   /** A checkbox in the gear panel. `apply` records the new state; what it changes is what
@@ -1084,14 +1130,20 @@ export class TaskGraphView extends ItemView {
     const root = this.drillPath[0];
     if (root && !isTask(root) && root.archived && this.showActiveOnly) this.drillPath = [];
     this.updateBreadcrumb();
+    this.updateDependencyMode();
     this.destroyGraph();
     this.liftedEdges.clear();
     this.graphContainer.empty();
+    this.dependencyAuditEl.empty();
     // `minWidth` too: a level of tasks fixes it on this very container, and left behind it
     // would floor the width the next render asks for — and the grid is measured against it.
     this.graphContainer.setCssStyles({ width: "", height: "", minWidth: "" });
 
     this.renderGraphContent();
+    const selectedProject = this.drillPath[0];
+    if (this.showAllDependencies && selectedProject && !isTask(selectedProject)) {
+      this.renderDependencyAudit(selectedProject);
+    }
 
     // Consumed once the whole render is up, so the card is there to be found.
     if (this.pendingSelectTaskId) {
@@ -1184,13 +1236,19 @@ export class TaskGraphView extends ItemView {
       return;
     }
 
+    const project = this.drillPath[0];
+    const allDependencies = this.showAllDependencies && !isTask(project);
     this.graph = this.createGraph({
-      elements: this.buildElements(),
+      elements: allDependencies ? this.buildAllDependencyElements(project) : this.buildElements(),
       spacing: DRILL_SPACING,
       padding: DRILL_PADDING,
       layout: layoutContainerLevel,
       settle: settleContainerLevel,
-      onDrillTask: (task) => { this.drillPath.push(task); this.renderGraph(); },
+      persistLayout: !allDependencies,
+      allowTaskMove: !allDependencies,
+      onDrillTask: allDependencies
+        ? undefined
+        : (task) => { this.drillPath.push(task); this.renderGraph(); },
       // No width of its own: the panel is what the graph is drawn across, and `minWidth`
       // is what lets a wide one scroll sideways rather than being squeezed.
       applySize: (size) => {
@@ -1217,6 +1275,10 @@ export class TaskGraphView extends ItemView {
     layout: GraphRendererOptions["layout"];
     /** What is sized off where the cards ended up — the frame round a level of tasks. */
     settle: GraphRendererOptions["settle"];
+    /** Flattened mode is a projection: its positions must not overwrite sibling layouts. */
+    persistLayout?: boolean;
+    /** A drop between levels means nothing in a flattened projection. */
+    allowTaskMove?: boolean;
   }): GraphRenderer {
     const nodes = opts.elements.nodes;
 
@@ -1242,11 +1304,13 @@ export class TaskGraphView extends ItemView {
         canDrop: (edge, end, target) => this.repointChoices(edge, end, target).length > 0,
         onDrop: (edge, end, target, evt) => this.repoint(edge, end, target, evt),
       },
-      nodeDrop: this.dropOn((dragged, target: GraphNode) => this.dropMove(dragged, target)),
+      nodeDrop: opts.allowTaskMove === false
+        ? undefined
+        : this.dropOn((dragged, target: GraphNode) => this.dropMove(dragged, target)),
       // The trail above the graph names every level a task can be moved up into, so it is
       // what a card is dropped on to get there. Asked for afresh each gesture: a render
       // builds the entries again.
-      outsideDrop: {
+      outsideDrop: opts.allowTaskMove === false ? undefined : {
         targets: () => [...this.breadcrumbEl.querySelectorAll<HTMLElement>("[data-drill-index]")],
         markClass: BREADCRUMB_DROP_CLASS,
         ...this.dropOn((dragged, entry: HTMLElement) => this.breadcrumbMove(dragged, entry)),
@@ -1254,11 +1318,11 @@ export class TaskGraphView extends ItemView {
       // The two gestures that leave a card somewhere of its own. Both are told the whole
       // layout the card now carries, so recording either is the same write.
       onNodeDragEnd: (node, layout) => {
-        this.saveCard(node, layout);
+        if (opts.persistLayout !== false) this.saveCard(node, layout);
         opts.applySize(graph.fit(opts.padding));
       },
       onNodeResizeEnd: (node, layout) => {
-        this.saveCard(node, layout);
+        if (opts.persistLayout !== false) this.saveCard(node, layout);
         opts.applySize(graph.fit(opts.padding));
       },
     });
@@ -1279,12 +1343,16 @@ export class TaskGraphView extends ItemView {
     });
   }
 
-  private taskNode(task: ProjectTask, data: NodeData): TaskNode {
+  private taskNode(
+    task: ProjectTask,
+    data: NodeData,
+    layout: CardLayout | null | undefined = task.card,
+  ): TaskNode {
     return new TaskNode({
       id: data.id,
       card: this.taskNodeCard(data),
       isClosed: isClosedCard(data),
-      layout: task.card,
+      layout,
     });
   }
 
@@ -1632,6 +1700,73 @@ export class TaskGraphView extends ItemView {
       card,
       layout: task.card?.w !== undefined ? { w: task.card.w, h: task.card.h } : null,
     });
+  }
+
+  /** Every task owned by a project, regardless of parent depth. Stored sibling positions do
+   * not carry into this flattened projection; sizes do, while dependency layout places the
+   * cards without overlapping positions chosen for another level. */
+  private buildAllDependencyElements(project: Project): GraphElements {
+    const today = new Date();
+    const index = this.buildVaultIndex();
+    const tasks = this.tasks.filter((task) => task.projectId === project.id);
+    const links = this.dependencyLinks(tasks, [], index, today);
+    return {
+      nodes: [
+        this.containerNode(project, tasks.length),
+        ...tasks.map((task) => this.taskNode(
+          task,
+          this.taskNodeData(task, index, today),
+          cardWithout(task.card, CardPart.Place),
+        )),
+        ...links.nodes,
+      ],
+      edges: links.edges,
+    };
+  }
+
+  private dependencyRefLabel(ref: DependencyAuditRef): string {
+    const title = stripWikiLinks(ref.title);
+    if (ref.missing) return `${title} (missing)`;
+    return ref.external ? `${title} (external)` : title;
+  }
+
+  /** The exhaustive textual counterpart to the graph. It deliberately includes independent
+   * and closed tasks: "all dependencies" is an audit, not the active-work filter. */
+  private renderDependencyAudit(project: Project): void {
+    const audit = buildProjectDependencyAudit(this.tasks, project.id);
+    const section = this.dependencyAuditEl.createDiv({ cls: "pm-dependency-audit" });
+    const plural = (count: number, one: string, many = `${one}s`) => count === 1 ? one : many;
+    section.createDiv({
+      cls: "pm-dependency-audit-summary",
+      text: `${audit.rows.length} ${plural(audit.rows.length, "task")} · `
+        + `${audit.dependencyCount} ${plural(audit.dependencyCount, "dependency", "dependencies")} · `
+        + `${audit.independentCount} independent`,
+    });
+
+    const table = section.createEl("table", { cls: "pm-dependency-audit-table" });
+    const header = table.createTHead().insertRow();
+    for (const label of ["Task", "Depends on", "Blocks", "Status"]) {
+      header.createEl("th", { text: label });
+    }
+    const body = table.createTBody();
+    const byId = this.taskById;
+    for (const row of audit.rows) {
+      const tr = body.insertRow();
+      tr.dataset.taskId = row.task.id;
+      const taskCell = tr.insertCell();
+      const taskButton = taskCell.createEl("button", {
+        cls: "pm-dependency-audit-task",
+        text: stripWikiLinks(row.task.title),
+      });
+      taskButton.addEventListener("click", () => openNoteFile(this.app, row.task.filePath));
+      const writeRefs = (refs: DependencyAuditRef[]) => {
+        const cell = tr.insertCell();
+        cell.textContent = refs.length === 0 ? "—" : refs.map((ref) => this.dependencyRefLabel(ref)).join(", ");
+      };
+      writeRefs(row.dependsOn);
+      writeRefs(row.blocks);
+      tr.insertCell().textContent = effectiveStatus(row.task, byId);
+    }
   }
 
   /**

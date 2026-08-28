@@ -497,17 +497,17 @@ body {
 }
 
 /* Make the leaf a flex column so the graph fills remaining height */
-.workspace-leaf-content[data-type="pm-compass-task-graph"] {
+.workspace-leaf-content[data-type="worktrack-pm-compass-task-graph"] {
   display: flex;
   flex-direction: column;
 }
 
 /* contentEl (.view-content) must also be a flex column so flex:1 on the graph container works */
-.workspace-leaf-content[data-type="pm-compass-task-graph"] .view-header-nav-buttons {
+.workspace-leaf-content[data-type="worktrack-pm-compass-task-graph"] .view-header-nav-buttons {
   display: none;
 }
 
-.workspace-leaf-content[data-type="pm-compass-task-graph"] .view-content {
+.workspace-leaf-content[data-type="worktrack-pm-compass-task-graph"] .view-content {
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -526,6 +526,43 @@ body {
   gap: 6px;
   flex: 1;
   min-width: 0;
+}
+
+.pm-dependency-mode {
+  display: flex;
+  flex-shrink: 0;
+  gap: 2px;
+  padding: 2px;
+  border: var(--pm-border);
+  border-radius: var(--pm-radius);
+  background: var(--background-secondary);
+}
+
+.pm-dependency-mode-btn {
+  min-height: 24px;
+  height: auto;
+  padding: 2px 8px;
+  border: none;
+  border-radius: calc(var(--pm-radius) - 2px);
+  background: transparent;
+  color: var(--text-muted);
+  box-shadow: none;
+  font-size: var(--pm-font-xs);
+  white-space: nowrap;
+}
+
+.pm-dependency-mode-btn:hover:not(:disabled) {
+  color: var(--text-normal);
+  background: var(--background-modifier-hover);
+}
+
+.pm-dependency-mode-btn.is-active {
+  color: var(--text-on-accent);
+  background: var(--interactive-accent);
+}
+
+.pm-dependency-mode-btn:disabled {
+  opacity: 0.45;
 }
 
 .pm-compass-gear-btn {
@@ -651,6 +688,80 @@ body {
   min-width: 100%;
   min-height: 100%;
   position: relative;
+}
+
+.pm-dependency-audit-host {
+  min-width: 100%;
+}
+
+.pm-dependency-audit {
+  padding: 16px;
+  border-top: var(--pm-border);
+  background: var(--background-primary);
+}
+
+.pm-dependency-audit-summary {
+  margin-bottom: 10px;
+  color: var(--text-muted);
+  font-size: var(--pm-font-sm);
+}
+
+.pm-dependency-audit-table {
+  width: 100%;
+  min-width: 560px;
+  border-collapse: collapse;
+  font-size: var(--pm-font-sm);
+}
+
+.pm-dependency-audit-table th,
+.pm-dependency-audit-table td {
+  padding: 8px 10px;
+  border-bottom: var(--pm-border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.pm-dependency-audit-table th {
+  color: var(--text-muted);
+  font-size: var(--pm-font-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.pm-dependency-audit-task {
+  height: auto;
+  min-height: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  color: var(--text-accent);
+  font: inherit;
+  text-align: left;
+}
+
+.pm-dependency-audit-task:hover {
+  text-decoration: underline;
+  background: transparent;
+}
+
+@media (max-width: 600px) {
+  .pm-breadcrumb {
+    flex-wrap: wrap;
+  }
+
+  .pm-breadcrumb-items {
+    flex-basis: 100%;
+  }
+
+  .pm-dependency-mode {
+    order: 2;
+  }
+
+  .pm-dependency-mode-btn {
+    min-height: 30px;
+  }
 }
 
 .pm-compass-empty {
@@ -1642,7 +1753,7 @@ button.pm-tm-color-btn.pm-tm-color-btn--none {
 
 /* ── Dashboard view ─────────────────────────────────────────────────────── */
 
-.workspace-leaf-content[data-type="pm-compass-dashboard"] .view-content {
+.workspace-leaf-content[data-type="worktrack-pm-compass-dashboard"] .view-content {
   display: flex;
   flex-direction: column;
   overflow: hidden;

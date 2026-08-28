@@ -26,7 +26,7 @@ pnpm build:dev   # readable, with an inline sourcemap
 pnpm dev         # watch build; implies --dev
 ```
 
-Either produces `main.js`. Obsidian also needs `manifest.json` and `styles.css` alongside it in `<vault>/.obsidian/plugins/pm-compass/`. `pnpm build` is the default so that what is tested locally is what users run; reach for `build:dev` when a stack trace has to name real functions, at about eight times the size.
+Either produces `main.js`. Obsidian also needs `manifest.json` and `styles.css` alongside it in `<vault>/.obsidian/plugins/worktrack-pm-compass/`. `pnpm build` is the default so that what is tested locally is what users run; reach for `build:dev` when a stack trace has to name real functions, at about eight times the size.
 
 ### Checking the bundle
 
@@ -50,7 +50,7 @@ node docs/technical/preview/cdp.mjs "app.plugins.plugins['pm-compass'].manifest.
 
 # switch tabs and measure, which nothing else can do:
 node docs/technical/preview/cdp.mjs "(async () => {
-  const v = app.workspace.getLeavesOfType('pm-compass-dashboard')[0].view;
+  const v = app.workspace.getLeavesOfType('worktrack-pm-compass-dashboard')[0].view;
   v.activeTab = 'tasks'; await v.render();
   const r = (s) => { const q = document.querySelector(s).getBoundingClientRect();
     return Math.round(q.left) + '..' + Math.round(q.right) + ' h' + Math.round(q.height); };

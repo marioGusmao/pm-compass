@@ -1,6 +1,6 @@
 {
-  "name": "pm-compass",
-  "version": "1.2.2",
+  "name": "worktrack-pm-compass",
+  "version": "1.2.2-worktrack.1",
   "private": true,
   "scripts": {
     "build": "node esbuild.config.mjs",

@@ -1,10 +1,10 @@
 {
-  "id": "pm-compass",
-  "name": "PM Compass",
-  "version": "1.2.2",
+  "id": "worktrack-pm-compass",
+  "name": "PM Compass — WorkTrack",
+  "version": "1.2.2-worktrack.1",
   "minAppVersion": "1.12.7",
-  "description": "Every task in one place: a dashboard, an inbox, a weekly review and an interactive dependency graph, built on your Project Manager notes and Daily Note checklists.",
-  "author": "Laurent Ferier",
-  "authorUrl": "https://github.com/Laurent-Ferier",
+  "description": "WorkTrack-maintained PM Compass with an exhaustive project dependency graph and audit table.",
+  "author": "Laurent Ferier; WorkTrack fork maintained by Mário Gusmão",
+  "authorUrl": "https://github.com/marioGusmao/pm-compass",
   "isDesktopOnly": false
 }

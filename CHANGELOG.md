@@ -4,6 +4,18 @@ All notable changes to this project are documented in this file.
 
 ## [Unreleased]
 
+## [1.2.2-worktrack.1] - 2026-08-28
+
+### Added
+
+- An **All dependencies** mode flattens every task depth of the selected Project Manager project into one graph.
+- A complete audit table lists every task, what it depends on, what it blocks, its status, and independent tasks.
+
+### Changed
+
+- The WorkTrack fork uses its own plugin and view identities so the community updater cannot overwrite it or collide with the official PM Compass runtime.
+- Flattened graph positions are transient and never overwrite the card layout stored for ordinary hierarchy levels.
+
 ## [1.2.2] - 2026-08-14
 
 ### Changed
