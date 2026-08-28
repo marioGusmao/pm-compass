@@ -11,7 +11,7 @@ export interface PMCompassSettings {
   syncObsidianPmSettings: boolean;
   /** The graph's one display filter: on, it holds back the tasks that count as finished
    *  and the projects that have been archived. */
-  panelConfig: { showActiveOnly: boolean };
+  panelConfig: { showActiveOnly: boolean; showAllDependencies: boolean };
   dailyHabitsTag: string;
   dashboardCollapsed: Record<string, boolean>;
   unclosedDaysBefore: number;
@@ -56,7 +56,7 @@ export interface PMCompassSettings {
 export const DEFAULT_SETTINGS: PMCompassSettings = {
   projectsFolder: "Projects",
   syncObsidianPmSettings: true,
-  panelConfig: { showActiveOnly: true },
+  panelConfig: { showActiveOnly: true, showAllDependencies: false },
   dailyHabitsTag: "daily",
   dashboardCollapsed: {},
   unclosedDaysBefore: 30,

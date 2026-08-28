@@ -201,7 +201,7 @@ vi.mock("obsidian", async () => ({
 }));
 
 vi.mock("./dashboard-view", () => ({
-  DASHBOARD_VIEW_TYPE: "pm-compass-dashboard",
+  DASHBOARD_VIEW_TYPE: "worktrack-pm-compass-dashboard",
   DashboardView: MockDashboardView,
 }));
 vi.mock("./inbox-view", () => ({ InboxView: MockInboxView }));
@@ -364,7 +364,7 @@ beforeEach(() => {
 describe("PMCompassView metadata", () => {
   it("reports the dashboard view type/display text/icon", () => {
     const { view } = makeView();
-    expect(view.getViewType()).toBe("pm-compass-dashboard");
+    expect(view.getViewType()).toBe("worktrack-pm-compass-dashboard");
     expect(view.getDisplayText()).toBe("PM Compass dashboard");
     expect(view.getIcon()).toBe(Icon.DashboardTab);
   });

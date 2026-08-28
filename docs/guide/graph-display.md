@@ -10,10 +10,7 @@ Open it from the ribbon icon in the left sidebar, or from the command palette wi
 
 *The graph opens on the projects, in rows cut to the width of the panel the first time it draws them.*
 
-**One level is drawn at a time**, and the trail at the top left says where you are: *All* for the projects, then the project you went into, then each task below it. It names the way back rather than where you are.
-
-Two taps on a card go one level deeper. Everything on the screen acts on the level you are on. <img src="images/icons/git-fork.svg" width="14" alt=""> *Open in graph* on a [Dashboard](dashboard.md) row is the other way in: it opens the level holding that task and picks its card out.
-
+**Current level** draws one level at a time, and the trail at the top left says where you are: *All* for the projects, then the project you went into, then each task below it. It names the way back rather tha...[truncated]
 The gear opens the display options:
 
 - **Active only** — leaves out the finished tasks, a task under a finished parent among them, and the archived projects.

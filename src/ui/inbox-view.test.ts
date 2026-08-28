@@ -185,7 +185,7 @@ vi.mock("./task-creator", async (importOriginal) => ({
 }));
 
 vi.mock("./task-graph-view", () => ({
-  TASK_GRAPH_VIEW_TYPE: "pm-compass-task-graph",
+  TASK_GRAPH_VIEW_TYPE: "worktrack-pm-compass-task-graph",
   TaskGraphView: class {},
 }));
 

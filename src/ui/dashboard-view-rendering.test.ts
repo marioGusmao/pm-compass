@@ -223,7 +223,7 @@ const {
 }));
 
 vi.mock("./task-graph-view", () => ({
-  TASK_GRAPH_VIEW_TYPE: "pm-compass-task-graph",
+  TASK_GRAPH_VIEW_TYPE: "worktrack-pm-compass-task-graph",
   TaskGraphView: MockTaskGraphView,
 }));
 
@@ -2705,7 +2705,7 @@ describe("BaseTabView", () => {
       getLeaf.mockReturnValue(newLeaf);
       internals(view).app = app;
       await internals(view).openInGraph(makeTask({ id: "t1", projectId: "p1" }));
-      expect(newLeaf.setViewState).toHaveBeenCalledWith({ type: "pm-compass-task-graph", active: true });
+      expect(newLeaf.setViewState).toHaveBeenCalledWith({ type: "worktrack-pm-compass-task-graph", active: true });
       expect(revealLeaf).toHaveBeenCalledWith(newLeaf);
       expect(graphView.openTask).toHaveBeenCalledWith("p1", "t1");
     });

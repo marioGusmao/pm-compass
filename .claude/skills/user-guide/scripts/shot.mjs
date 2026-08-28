@@ -82,8 +82,8 @@ const PRELUDE = `
   // re-renders in between (the graph settles its layout) rebuilds its nodes from the vault
   // and puts the real words back.
   window.__anonymize = anonymize;
-  const plugin = app.plugins.plugins['pm-compass'];
-  const leaf = app.workspace.getLeavesOfType('pm-compass-dashboard')[0];
+  const plugin = app.plugins.plugins['worktrack-pm-compass'];
+  const leaf = app.workspace.getLeavesOfType('worktrack-pm-compass-dashboard')[0];
   const host = leaf.view;
   // Reset every frame knob: the page outlives one run of this script.
   window.__crop = null; window.__pad = 0; window.__trimBottom = 0;

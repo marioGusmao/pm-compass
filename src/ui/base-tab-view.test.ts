@@ -36,7 +36,7 @@ vi.mock("obsidian", () => ({
 // The graph view pulls in the dashboard, which extends the class under test — mocked so the
 // cycle doesn't leave `BaseTabView` undefined at the point the dashboard extends it.
 vi.mock("./task-graph-view", () => ({
-  TASK_GRAPH_VIEW_TYPE: "pm-compass-task-graph",
+  TASK_GRAPH_VIEW_TYPE: "worktrack-pm-compass-task-graph",
   TaskGraphView: class { openTask = vi.fn().mockResolvedValue(undefined); },
 }));
 

@@ -101,6 +101,8 @@ export default class PMCompassPlugin extends Plugin {
     // older install stored and this one has dropped would ride along in data.json forever.
     this.settings.panelConfig = {
       showActiveOnly: known.panelConfig?.showActiveOnly ?? DEFAULT_SETTINGS.panelConfig.showActiveOnly,
+      showAllDependencies: known.panelConfig?.showAllDependencies
+        ?? DEFAULT_SETTINGS.panelConfig.showAllDependencies,
     };
   }
 

@@ -294,7 +294,7 @@ vi.mock("./move-target-modal", () => ({
 }));
 
 // dashboard-view.ts only needed for the DASHBOARD_VIEW_TYPE string constant.
-vi.mock("./dashboard-view", () => ({ DASHBOARD_VIEW_TYPE: "pm-compass-dashboard" }));
+vi.mock("./dashboard-view", () => ({ DASHBOARD_VIEW_TYPE: "worktrack-pm-compass-dashboard" }));
 
 import { TaskGraphView, TASK_GRAPH_VIEW_TYPE, stripWikiLinks } from "./task-graph-view";
 import { ChangeOrigin, CacheEvent, type CacheEvents } from "../model/cache/cache-events";
@@ -421,7 +421,7 @@ function makePlugin(overrides: Record<string, unknown> = {}) {
   return {
     settings: {
       projectsFolder: "Projects",
-      panelConfig: { showActiveOnly: true },
+      panelConfig: { showActiveOnly: true, showAllDependencies: false },
       confirmDeletes: true,
       confirmTaskMoves: true,
       confirmDependencyRemoval: true,
@@ -887,6 +887,129 @@ describe("TaskGraphView.onOpen — the grid of projects", () => {
     const { view } = makeView();
     await openProject(view);
     expect(view.contentEl.querySelectorAll(".pm-graph-edge")).toHaveLength(1);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// All dependencies — flattened project graph and audit table
+// ---------------------------------------------------------------------------
+
+describe("all dependencies mode", () => {
+  function modeButton(view: TaskGraphView, mode: "level" | "all"): HTMLButtonElement {
+    const button = view.contentEl.querySelector<HTMLButtonElement>(`.pm-dependency-mode-btn[data-mode="${mode}"]`);
+    if (!button) throw new Error(`no ${mode} dependency mode button`);
+    return button;
+  }
+
+  it("flattens every task depth in the selected project and draws every direct dependency", async () => {
+    mockLoadVaultData.mockResolvedValue({
+      projects: [makeProject({ id: "p1", title: "Alpha" }), makeProject({ id: "p2", title: "Other" })],
+      tasks: [
+        makeTask({ id: "root", projectId: "p1", title: "Root" }),
+        makeTask({ id: "child", projectId: "p1", parentId: "root", title: "Child", dependencies: ["root"] }),
+        makeTask({ id: "grandchild", projectId: "p1", parentId: "child", title: "Grandchild", dependencies: ["child"] }),
+        makeTask({ id: "other", projectId: "p2", title: "Other task" }),
+      ],
+    });
+    const { view } = makeView();
+    await openProject(view);
+    expect(view.contentEl.querySelectorAll(".pm-node-card")).toHaveLength(1);
+
+    modeButton(view, "all").click();
+
+    expect([...view.contentEl.querySelectorAll<HTMLElement>(".pm-node-card")]
+      .map((card) => card.dataset.taskId).sort()).toEqual(["child", "grandchild", "root"]);
+    expect(view.contentEl.querySelectorAll(".pm-graph-edge")).toHaveLength(2);
+    expect(levelTitle(view)).toBe("Alpha");
+  });
+
+  it("renders a complete audit table with depends-on, blocks and independent rows", async () => {
+    mockLoadVaultData.mockResolvedValue({
+      projects: [makeProject({ id: "p1" })],
+      tasks: [
+        makeTask({ id: "first", projectId: "p1", title: "First" }),
+        makeTask({ id: "second", projectId: "p1", title: "Second", dependencies: ["first"] }),
+        makeTask({ id: "independent", projectId: "p1", title: "Independent" }),
+      ],
+    });
+    const { view } = makeView();
+    await openProject(view);
+    modeButton(view, "all").click();
+
+    const table = view.contentEl.querySelector(".pm-dependency-audit")!;
+    expect(table.querySelector(".pm-dependency-audit-summary")?.textContent)
+      .toBe("3 tasks · 1 dependency · 1 independent");
+    expect([...table.querySelectorAll("thead th")].map((cell) => cell.textContent))
+      .toEqual(["Task", "Depends on", "Blocks", "Status"]);
+    const rows = [...table.querySelectorAll<HTMLTableRowElement>("tbody tr")];
+    expect(rows).toHaveLength(3);
+    const byTask = new Map(rows.map((row) => [row.dataset.taskId, [...row.cells].map((cell) => cell.textContent)]));
+    expect(byTask.get("first")).toEqual(["First", "—", "Second", "todo"]);
+    expect(byTask.get("second")).toEqual(["Second", "First", "—", "todo"]);
+    expect(byTask.get("independent")).toEqual(["Independent", "—", "—", "todo"]);
+  });
+
+  it("does not infer an edge from dates or nesting", async () => {
+    mockLoadVaultData.mockResolvedValue({
+      projects: [makeProject({ id: "p1" })],
+      tasks: [
+        makeTask({ id: "parent", projectId: "p1", due: new Date(2026, 7, 21) }),
+        makeTask({ id: "child", projectId: "p1", parentId: "parent", start: new Date(2026, 7, 22) }),
+      ],
+    });
+    const { view } = makeView();
+    await openProject(view);
+    modeButton(view, "all").click();
+
+    expect(view.contentEl.querySelectorAll(".pm-graph-edge")).toHaveLength(0);
+    expect(view.contentEl.querySelector(".pm-dependency-audit-summary")?.textContent)
+      .toBe("2 tasks · 0 dependencies · 2 independent");
+  });
+
+  it("does not persist flattened positions or turn a card drop into a hierarchy move", async () => {
+    const project = makeProject({ id: "p1" });
+    const first = makeTask({ id: "first", projectId: "p1" });
+    const second = makeTask({ id: "second", projectId: "p1" });
+    mockLoadVaultData.mockResolvedValue({ projects: [project], tasks: [first, second] });
+    const app = makeApp();
+    noteFor(app, project);
+    noteFor(app, first);
+    noteFor(app, second);
+    const { view } = makeView(app);
+    await openProject(view);
+    modeButton(view, "all").click();
+
+    const firstCard = cardFor(view, "first");
+    const secondCard = cardFor(view, "second");
+    const from = firstCard.closest<HTMLElement>(".pm-graph-node")!;
+    const to = secondCard.closest<HTMLElement>(".pm-graph-node")!;
+    drag(
+      firstCard.querySelector(".pm-node-title")!,
+      Number.parseFloat(to.style.left) - Number.parseFloat(from.style.left),
+      Number.parseFloat(to.style.top) - Number.parseFloat(from.style.top),
+    );
+    await Promise.resolve();
+
+    expect(app.fileManager.processFrontMatter).not.toHaveBeenCalled();
+  });
+
+  it("returns to the ordinary level graph and removes the audit table", async () => {
+    mockLoadVaultData.mockResolvedValue({
+      projects: [makeProject({ id: "p1" })],
+      tasks: [
+        makeTask({ id: "root", projectId: "p1" }),
+        makeTask({ id: "child", projectId: "p1", parentId: "root" }),
+      ],
+    });
+    const { view } = makeView();
+    await openProject(view);
+    modeButton(view, "all").click();
+    expect(view.contentEl.querySelector(".pm-dependency-audit")).not.toBeNull();
+
+    modeButton(view, "level").click();
+
+    expect(view.contentEl.querySelectorAll(".pm-node-card")).toHaveLength(1);
+    expect(view.contentEl.querySelector(".pm-dependency-audit")).toBeNull();
   });
 });
 
@@ -3115,7 +3238,7 @@ describe("signalDashboard", () => {
     const { view, app } = makeView();
     await openProject(view);
     tap(cardFor(view, "t1").querySelector(".pm-node-title")!);
-    expect(app.workspace.getLeavesOfType).toHaveBeenCalledWith("pm-compass-dashboard");
+    expect(app.workspace.getLeavesOfType).toHaveBeenCalledWith("worktrack-pm-compass-dashboard");
   });
 
   it("calls selectTask on the dashboard leaf's view when one is open", async () => {

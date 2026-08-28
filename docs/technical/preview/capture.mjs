@@ -32,7 +32,7 @@ const evaluate = (expression) => new Promise((resolve) => {
 });
 
 const script = (tab) => `(async () => {
-  const view = app.workspace.getLeavesOfType('pm-compass-dashboard')[0].view;
+  const view = app.workspace.getLeavesOfType('worktrack-pm-compass-dashboard')[0].view;
   view.activeTab = ${JSON.stringify(tab)};
   await view.render();
   // The body and the strip under it, which is where the add-task bar lives.

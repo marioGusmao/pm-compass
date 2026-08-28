@@ -1,5 +1,7 @@
 # pm-compass
 
+> **WorkTrack-maintained fork.** Based on upstream 1.2.2. The Task Graph adds an exhaustive **All dependencies** mode for the selected project, including every task depth and a complete dependency audit table. The fork uses the distinct Obsidian plugin ID `worktrack-pm-compass`.
+
 Every task in one place: a dashboard, an inbox, a weekly review and an interactive dependency graph, built on two things your vault already has — project/task notes from [obsidian-pm](https://github.com/stepankropachev/obsidian-pm) and checklist items in Obsidian's core Daily Notes. It reads and edits those files directly, so there's no separate database, and everything it does is a normal markdown edit you can also make by hand.
 
 ## What it adds to Daily Notes

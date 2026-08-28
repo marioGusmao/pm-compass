@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Build the plugin and symlink main.js/manifest.json/styles.css into a vault's
-# .obsidian/plugins/pm-compass directory, so future rebuilds are picked up by
+# .obsidian/plugins/worktrack-pm-compass directory, so future rebuilds are picked up by
 # Obsidian without re-copying.
 #
 # Usage:   scripts/link-plugin.sh [--dev] <vault-path>
@@ -35,7 +35,7 @@ fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$SCRIPT_DIR/.."
-DEST="$VAULT/.obsidian/plugins/pm-compass"
+DEST="$VAULT/.obsidian/plugins/worktrack-pm-compass"
 
 if [[ "$DEV" == true ]]; then
   echo "Building (dev: readable, with sourcemap)…"
@@ -53,4 +53,4 @@ for file in main.js manifest.json styles.css; do
   echo "  linked $DEST/$file -> $src"
 done
 
-echo "pm-compass linked in $DEST"
+echo "worktrack-pm-compass linked in $DEST"

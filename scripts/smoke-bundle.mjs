@@ -123,13 +123,13 @@ const app = {
   metadataCache: { on: () => ({}), getFileCache: () => null },
 };
 
-const plugin = new PluginClass(app, { id: "pm-compass", version: "0.0.0" });
+const plugin = new PluginClass(app, { id: "worktrack-pm-compass", version: "0.0.0" });
 await plugin.onload();
 
 const viewTypes = plugin.registeredViews.map((v) => v.type).sort();
 const commandIds = plugin.commands.map((c) => c.id).sort();
 
-const expectedViews = ["pm-compass-dashboard", "pm-compass-task-graph"];
+const expectedViews = ["worktrack-pm-compass-dashboard", "worktrack-pm-compass-task-graph"];
 const expectedCommands = ["open-dashboard", "open-task-graph"].sort();
 
 assert.deepStrictEqual(viewTypes, expectedViews, `views: got ${viewTypes}`);

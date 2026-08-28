@@ -27,7 +27,7 @@ import { confirmAction } from "./task-creator";
 import { openDatePicker } from "./date-picker";
 import { createBadgeBand } from "./task-badges";
 
-export const DASHBOARD_VIEW_TYPE = "pm-compass-dashboard";
+export const DASHBOARD_VIEW_TYPE = "worktrack-pm-compass-dashboard";
 
 // ── Dashboard (tasks tab) ─────────────────────────────────────────────────────
 
