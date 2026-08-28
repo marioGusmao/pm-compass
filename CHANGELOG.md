@@ -4,6 +4,13 @@ All notable changes to this project are documented in this file.
 
 ## [Unreleased]
 
+## [1.2.2-worktrack.2] - 2026-08-28
+
+### Fixed
+
+- Project and task discovery is recursive under the configured Project Manager folder, preserving projects stored in one folder per project.
+- Folder and inbox caches read their current settings on each use, matching the upstream post-1.2.2 runtime correction already required by WorkTrack.
+
 ## [1.2.2-worktrack.1] - 2026-08-28
 
 ### Added
