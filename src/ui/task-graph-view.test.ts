@@ -949,6 +949,62 @@ describe("all dependencies mode", () => {
     expect(byTask.get("independent")).toEqual(["Independent", "—", "—", "todo"]);
   });
 
+  it("renders both cross-project directions and keeps missing references audit-only", async () => {
+    mockLoadVaultData.mockResolvedValue({
+      projects: [makeProject({ id: "p1" }), makeProject({ id: "p2" })],
+      tasks: [
+        makeTask({
+          id: "waits",
+          projectId: "p1",
+          title: "Waits locally",
+          dependencies: ["outside-prerequisite", "missing-id"],
+        }),
+        makeTask({ id: "blocks", projectId: "p1", title: "Blocks externally" }),
+        makeTask({
+          id: "outside-prerequisite",
+          projectId: "p2",
+          title: "External prerequisite",
+        }),
+        makeTask({
+          id: "outside-dependent",
+          projectId: "p2",
+          title: "External dependent",
+          dependencies: ["blocks"],
+        }),
+      ],
+    });
+    const { view } = makeView();
+    await openProject(view);
+    modeButton(view, "all").click();
+
+    const cards = [...view.contentEl.querySelectorAll<HTMLElement>(".pm-node-card")];
+    const externalCards = cards.filter((card) => card.classList.contains("pm-node-card--external"));
+    expect(cards.filter((card) => !card.classList.contains("pm-node-card--external"))
+      .map((card) => card.dataset.taskId).sort()).toEqual(["blocks", "waits"]);
+    expect(externalCards).toHaveLength(2);
+    expect(externalCards.map((card) => card.querySelector(".pm-node-title")?.textContent).sort())
+      .toEqual(["External dependent", "External prerequisite"]);
+    expect(cards.some((card) => card.textContent?.includes("missing-id"))).toBe(false);
+    expect(view.contentEl.querySelectorAll(".pm-graph-edge")).toHaveLength(2);
+
+    const rows = [...view.contentEl.querySelectorAll<HTMLTableRowElement>(".pm-dependency-audit tbody tr")];
+    const byTask = new Map(rows.map((row) => [row.dataset.taskId, [...row.cells].map((cell) => cell.textContent)]));
+    expect(byTask.get("waits")).toEqual([
+      "Waits locally",
+      "External prerequisite (external), missing-id (missing)",
+      "—",
+      "todo",
+    ]);
+    expect(byTask.get("blocks")).toEqual([
+      "Blocks externally",
+      "—",
+      "External dependent (external)",
+      "todo",
+    ]);
+    expect(view.contentEl.querySelector(".pm-dependency-audit-summary")?.textContent)
+      .toBe("2 tasks · 3 dependencies · 0 independent");
+  });
+
   it("does not infer an edge from dates or nesting", async () => {
     mockLoadVaultData.mockResolvedValue({
       projects: [makeProject({ id: "p1" })],
